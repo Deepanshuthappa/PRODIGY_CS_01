@@ -1,0 +1,229 @@
+/*
+ * Password Checker GUI Application
+ * Author:Deepanshu Thappa
+ * Date: 17-07-2024
+ * 
+ * Description: 
+ * This is a Java Swing application provides a graphical interface for checking the complexity of user-entered passwords.
+ * It evaluates passwords based on length, presence of uppercase/lowercase letters, digits, special characters,
+ * and prevents the use of common passwords. Real-time feedback on password strength is provided.
+ 
+ * Usage:
+ * 1. Enter a username in the username field.
+ * 2. Enter a password in the password field.
+ * 3. Click the "Submit" button to check password complexity.
+ * 4. Receive real-time feedback on password strength and validation results.
+ */
+
+import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import java.awt.*;
+import java.util.regex.Pattern;
+
+public class PasswordCheckerGUI extends JFrame {
+
+    private JTextField usernameField;
+    private JPasswordField passwordField;
+    private JButton submitButton;
+    private JLabel strengthLabel;
+    private JTextArea resultTextArea;
+
+    // Define the criteria for password complexity
+
+    private static final int MIN_LENGTH = 8;
+    private static final String UPPER_CASE_PATTERN = ".*[A-Z].*";
+    private static final String LOWER_CASE_PATTERN = ".*[a-z].*";
+    private static final String DIGIT_PATTERN = ".*\\d.*";
+    private static final String SPECIAL_CHAR_PATTERN = ".*[!@#$%^&*].*";
+    private static final String[] COMMON_PASSWORDS = {
+            "password", "123456", "123456789", "12345678", "12345", "1234567",
+             "abc123", "Iamin", "xyz123", "11111111", "00000000", 
+    };
+
+    /**
+     * Constructor to set up the GUI components and layout.
+     */
+
+    public PasswordCheckerGUI() {
+        super("Password Checker");
+
+        // Create components
+        usernameField = new JTextField(20);
+        usernameField.setBackground(new Color(224, 255, 255)); // Light Cyan
+
+        passwordField = new JPasswordField(20);
+        passwordField.setBackground(new Color(224, 255, 255)); // Light Cyan
+
+        submitButton = new JButton("Submit");
+        submitButton.setBackground(new Color(173, 216, 230)); // Light Blue
+        submitButton.setForeground(Color.BLACK);
+
+        strengthLabel = new JLabel(" ");
+        strengthLabel.setFont(new Font("Arial", Font.BOLD, 16)); // Set font to bold and larger size
+
+        resultTextArea = new JTextArea(5, 20);
+        resultTextArea.setEditable(false); // Make result text area read-only
+        resultTextArea.setBackground(new Color(240, 248, 255)); // Alice Blue
+        JScrollPane scrollPane = new JScrollPane(resultTextArea);
+
+        // Set Layout
+
+        setLayout(new BorderLayout());
+
+        // Panel for input fields and submit button
+
+        JPanel inputPanel = new JPanel();
+        inputPanel.setLayout(new GridLayout(4, 2));
+        inputPanel.add(new JLabel("Username:"));
+        inputPanel.add(usernameField);
+        inputPanel.add(new JLabel("Password:"));
+        inputPanel.add(passwordField);
+        inputPanel.add(new JLabel("Strength:"));
+        inputPanel.add(strengthLabel);
+        inputPanel.add(new JLabel()); // Spacer
+        inputPanel.add(submitButton);
+        inputPanel.setBackground(new Color(255, 239, 213)); // Papaya Whip
+
+        // Add input panel and result text area to the frame
+
+        add(inputPanel, BorderLayout.NORTH);
+        add(scrollPane, BorderLayout.CENTER);
+
+        // Event handling for the submit button
+        submitButton.addActionListener(e -> {
+            String username = usernameField.getText();
+            String password = new String(passwordField.getPassword());
+
+            // Validate password complexity
+            String result = isPasswordComplex(password);
+
+            // Display result in the text area
+            resultTextArea.setText("Username: " + username + "\nPassword: " + password + "\nResult: " + result);
+        });
+
+        //Add document listener for real-time password strength feedback
+        
+
+        passwordField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                updatePasswordStrength();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                updatePasswordStrength();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                updatePasswordStrength();
+            }
+
+             // Updates the strength label in real-time based on the password entered.
+      
+            private void updatePasswordStrength() {
+                String password = new String(passwordField.getPassword());
+                int strength = getPasswordStrength(password);
+                switch (strength) {
+                    case 1:
+                        strengthLabel.setText("Your password is weak");
+                        strengthLabel.setForeground(Color.RED);
+                        break;
+                    case 2:
+                        strengthLabel.setText("Your password is medium");
+                        strengthLabel.setForeground(Color.YELLOW);
+                        break;
+                    case 3:
+                        strengthLabel.setText("Your password is strong");
+                        strengthLabel.setForeground(Color.GREEN);
+                        break;
+                    default:
+                        strengthLabel.setText(" ");
+                        strengthLabel.setForeground(Color.BLACK);
+                }
+            }
+        });
+
+        // Set frame properties
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setSize(400, 300); // Set initial size
+        setLocationRelativeTo(null); // Center the frame
+        setVisible(true); // Make the frame visible
+    }
+
+    /**
+     * Validates the password complexity based on predefined criteria.
+     *
+     * @param password The password to be checked.
+     * @return A message indicating whether the password meets the complexity criteria.
+     */
+
+     
+    public static String isPasswordComplex(String password) {
+        // Check length
+        if (password.length() < MIN_LENGTH) {
+            return "Password should be at least " + MIN_LENGTH + " characters long.";
+        }
+
+        // Check for uppercase letter
+        if (!Pattern.matches(UPPER_CASE_PATTERN, password)) {
+            return "Password should contain at least one uppercase letter (A-Z).";
+        }
+
+        // Check for lowercase letter
+        if (!Pattern.matches(LOWER_CASE_PATTERN, password)) {
+            return "Password should contain at least one lowercase letter (a-z).";
+        }
+
+        // Check for digit
+        if (!Pattern.matches(DIGIT_PATTERN, password)) {
+            return "Password should contain at least one digit (0-9).";
+        }
+
+        // Check for special character
+        if (!Pattern.matches(SPECIAL_CHAR_PATTERN, password)) {
+            return "Password should contain at least one special character (!@#$%^&*()_+-=[]{};':\"\\|,.<>/?).";
+        }
+
+        // Check for common passwords
+        for (String commonPassword : COMMON_PASSWORDS) {
+            if (password.equalsIgnoreCase(commonPassword)) {
+                return "Password is too common and easily guessable.";
+            }
+        }
+
+        // If all criteria are met
+        return "Password is complex and meets all criteria.";
+    }
+
+    /**
+     * Determines the strength of the password based on predefined criteria.
+     *
+     * @param password The password to be evaluated.
+     * @return An integer representing the password strength (1 = weak, 2 = medium, 3 = strong).
+     */
+
+
+    public static int getPasswordStrength(String password) {
+        int strength = 0;
+        if (password.length() >= MIN_LENGTH) strength++;
+        if (Pattern.matches(UPPER_CASE_PATTERN, password)) strength++;
+        if (Pattern.matches(LOWER_CASE_PATTERN, password)) strength++;
+        if (Pattern.matches(DIGIT_PATTERN, password)) strength++;
+        if (Pattern.matches(SPECIAL_CHAR_PATTERN, password)) strength++;
+        
+        // Determine strength
+        if (strength >= 4) return 3; // Strong
+        if (strength == 3) return 2; // Medium
+        return 1; // Weak
+    }
+
+    /*
+     *Main method to launch the PasswordCheckerGUI application.
+     */
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(PasswordCheckerGUI::new);
+    }
+}
